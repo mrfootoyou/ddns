@@ -1,3 +1,4 @@
+#requires -Version 7
 [CmdletBinding()]
 param(
     [string] $ConfigPath = "~/.ddns/config.json"
@@ -8,6 +9,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
+$PSNativeCommandUseErrorActionPreference = $false
 
 $ConfigPath = Convert-Path -LiteralPath $ConfigPath
 $configDir = Split-Path $ConfigPath -Parent
@@ -37,12 +39,20 @@ if (Test-Path $config.statusPath) {
 }
 
 trace 'Fetching IPv4 from https://api.ipify.org...'
-$ip4 = Invoke-RestMethod -Uri 'https://api.ipify.org?format=json' -ea Stop
-$ip6 = Invoke-RestMethod -Uri 'https://api6.ipify.org?format=json' -ea Continue
-$ip4 = $ip4.ip
-$ip6 = $ip6.ip
+$ip4 = curl 'https://api.ipify.org' --connect-timeout 5 --retry 5 --retry-delay 10 --silent
+if ($LASTEXITCODE -ne 0 -or -not $ip4) {
+    throw "Failed to fetch IPv4 address."
+}
 trace "IPv4: $ip4"
-trace "IPv6: $ip6"
+
+trace 'Fetching IPv6 from https://api6.ipify.org...'
+$ip6 = curl 'https://api6.ipify.org' --connect-timeout 5 --retry 5 --retry-delay 10 --silent
+if ($LASTEXITCODE -ne 0 -or -not $ip6) {
+    Write-Warning "Failed to fetch IPv6 address."
+}
+else {
+    trace "IPv6: $ip6"
+}
 
 foreach ($record in $config.records) {
     try {
@@ -89,7 +99,7 @@ foreach ($record in $config.records) {
                                 trace "IP4 unchanged ($($dnsRecord.content))."
                             }
                         }
-                        elseif ($dnsRecord.type -eq 'AAAA') {
+                        elseif ($ip6 -and $dnsRecord.type -eq 'AAAA') {
                             $recordstatus.lastUpdate.ip6 = $ip6
                             if ($dnsRecord.content -ne $ip6) {
                                 $patch = @{ content = $ip6 }
