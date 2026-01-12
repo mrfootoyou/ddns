@@ -2,10 +2,15 @@
 {
   "records": [
     {
-      "hostname": "home.example.com",
-      "username": "...",
-      "password": "...",
-      "ownerEmail": "john.doe@example.com"
+      "registrar": "Cloudflare",
+      "recordName": "home.example.com",
+      "zoneName": "example.com",
+      "apiToken": "..."
     }
-  ]
+  ],
+  // paths are relative to this file
+  "logPath": "update.log",
+  "logFileMaxSizeKB": 100,
+  "logFileKeepLast": 4,
+  "statusPath": "status.json"
 }
