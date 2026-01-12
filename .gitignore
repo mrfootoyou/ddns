@@ -1,2 +1,3 @@
-log.txt
-localuser.xml
+# Ignore default log and status files
+update.log
+status.json

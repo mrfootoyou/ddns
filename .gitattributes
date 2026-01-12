@@ -1,0 +1,3 @@
+# Fix syntax highlighting on GitHub to allow comments in certain json files.
+.vscode/*.json linguist-language=JSON-with-Comments
+config.json linguist-language=JSON-with-Comments
